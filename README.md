@@ -113,15 +113,15 @@ return nil
 ## 5. Exemple de gestion Confluent Cloud via CLI
 
 1. **Lister les topics** :
-   ```sh
+```sh
 go run cmd/main.go list-topics
 ```
 2. **Créer un topic** :
-   ```sh
+```sh
 go run cmd/main.go create-topic my-topic
 ```
 3. **Enregistrer un schéma** :
-   ```sh
+```sh
 go run cmd/main.go register-schema ExampleSchema
 ```
 
