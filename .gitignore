@@ -1,2 +1,3 @@
 metaventus-kafka-adapters.iml
 .idea
+avro_kafka_config/cmd/.env
