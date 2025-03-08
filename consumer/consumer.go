@@ -107,7 +107,7 @@ func (c *Consumer[T]) worker(ctx context.Context, handle func(context.Context, T
 			// Vérifier si on est dans la plage horaire ou non (skip si hors plage)
 			if c.isBusinessHours && !isBusinessHours(time.Now()) {
 				log.Println("Hors plage horaire : skip le message temporairement")
-				time.Sleep(1 * time.Minute)
+				<-time.After(10 * time.Minute)
 				continue
 			}
 
