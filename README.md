@@ -12,8 +12,7 @@ Bienvenue dans **Metaventus Kafka Adapters** – un **monorepo** Go qui fournit 
 4. [Modules principaux](#4-modules-principaux)  
 5. [Exemple de consommation/production Kafka](#5-exemple-de-consommationproduction-kafka)  
 6. [Exemple de gestion Confluent Cloud via CLI](#6-exemple-de-gestion-confluent-cloud-via-cli)  
-7. [Dépendances et outils utilisés](#7-dépendances-et-outils-utilisés)  
-8. [Contribuer](#8-contribuer)
+7. [Dépendances et outils utilisés](#7-dépendances-et-outils-utilisés)
 
 ---
 
