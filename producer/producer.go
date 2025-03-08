@@ -23,7 +23,6 @@ type Producer struct {
 func NewProducer(ctx context.Context, cfg Config) (*Producer, error) {
 	transport := &kafka.Transport{}
 
-	// ⚠️ Assurer que SASL et TLS sont bien configurés pour Confluent Cloud
 	if cfg.SASL {
 		transport.SASL = plain.Mechanism{
 			Username: cfg.Username,
@@ -33,7 +32,7 @@ func NewProducer(ctx context.Context, cfg Config) (*Producer, error) {
 
 	if cfg.TLS {
 		transport.TLS = &tls.Config{
-			InsecureSkipVerify: false, // ← Ne pas ignorer la vérification TLS
+			InsecureSkipVerify: false,
 			MinVersion:         tls.VersionTLS12,
 		}
 	}
@@ -50,12 +49,11 @@ func NewProducer(ctx context.Context, cfg Config) (*Producer, error) {
 	}
 	defer conn.Close()
 
-	// ✅ 🔄 Nouvelle connexion avec le transport sécurisé (TLS + SASL)
 	w := &kafka.Writer{
 		Addr:      kafka.TCP(cfg.Brokers...),
 		Topic:     cfg.Topic,
 		Transport: transport,
-		Balancer:  &kafka.LeastBytes{}, // ⚡ Utiliser un balancer efficace
+		Balancer:  &kafka.LeastBytes{},
 	}
 
 	return &Producer{
