@@ -21,9 +21,9 @@ type Producer struct {
 
 // NewProducer initialise un Kafka Producer avec authentification
 func NewProducer(ctx context.Context, cfg Config) (*Producer, error) {
-	// Créer un transport non-nil
 	transport := &kafka.Transport{}
 
+	// ⚠️ Assurer que SASL et TLS sont bien configurés pour Confluent Cloud
 	if cfg.SASL {
 		transport.SASL = plain.Mechanism{
 			Username: cfg.Username,
@@ -32,35 +32,30 @@ func NewProducer(ctx context.Context, cfg Config) (*Producer, error) {
 	}
 
 	if cfg.TLS {
-		transport.TLS = &tls.Config{}
+		transport.TLS = &tls.Config{
+			InsecureSkipVerify: false, // ← Ne pas ignorer la vérification TLS
+			MinVersion:         tls.VersionTLS12,
+		}
 	}
 
-	// 1) "Ping" : vérifier la connectivité sur le premier broker
 	if len(cfg.Brokers) == 0 {
 		return nil, fmt.Errorf("aucun broker spécifié")
 	}
+
 	primaryBroker := cfg.Brokers[0]
 
-	// Dial direct pour checker si on arrive à se connecter
 	conn, err := kafka.DialContext(ctx, "tcp", primaryBroker)
 	if err != nil {
 		return nil, fmt.Errorf("erreur de connexion/ping sur %s: %w", primaryBroker, err)
 	}
 	defer conn.Close()
 
-	// On peut pousser plus loin en faisant un read de métadonnées,
-	// exemple: lire la liste des partitions du topic (si on veut être sûr que ce topic existe)
-	_, err = conn.ReadPartitions()
-	if err != nil {
-		return nil, fmt.Errorf("erreur ReadPartitions sur %s: %w", primaryBroker, err)
-	}
-
-	// 2) Construire le writer
+	// ✅ 🔄 Nouvelle connexion avec le transport sécurisé (TLS + SASL)
 	w := &kafka.Writer{
 		Addr:      kafka.TCP(cfg.Brokers...),
 		Topic:     cfg.Topic,
 		Transport: transport,
-		// Autres options (BatchTimeout, Balancer, etc.) si besoin
+		Balancer:  &kafka.LeastBytes{}, // ⚡ Utiliser un balancer efficace
 	}
 
 	return &Producer{
