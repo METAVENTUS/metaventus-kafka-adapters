@@ -232,6 +232,3 @@ Grâce à `avro_kafka_config`, vous pouvez :
 - **Enregistrer** vos schémas Avro dans le Schema Registry.
 - **Aligner** vos modèles Go avec ces mêmes schémas pour assurer la **compatibilité** de la sérialisation.
 
-C’est une solution **simple, modulaire** et **scalable** pour gérer **Kafka** et **Confluent** dans un seul **monorepo Go**.
-
-**Bon usage !** 
