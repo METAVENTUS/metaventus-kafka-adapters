@@ -20,27 +20,53 @@ type Producer struct {
 }
 
 // NewProducer initialise un Kafka Producer avec authentification
-func NewProducer(cfg Config) *Producer {
-	// Configuration de l'authentification SASL si activée
-	var transport *kafka.Transport
+func NewProducer(ctx context.Context, cfg Config) (*Producer, error) {
+	// Créer un transport non-nil
+	transport := &kafka.Transport{}
+
 	if cfg.SASL {
-		transport = &kafka.Transport{
-			SASL: plain.Mechanism{
-				Username: cfg.Username,
-				Password: cfg.Password,
-			},
-			TLS: &tls.Config{}, // Ajout de TLS si nécessaire
+		transport.SASL = plain.Mechanism{
+			Username: cfg.Username,
+			Password: cfg.Password,
 		}
 	}
 
-	return &Producer{
-		writer: &kafka.Writer{
-			Addr:      kafka.TCP(cfg.Brokers...), // Connexion aux brokers
-			Topic:     cfg.Topic,                 // Topic Kafka
-			Transport: transport,                 // Ajout du transport avec SASL/TLS
-		},
-		topic: cfg.Topic,
+	if cfg.TLS {
+		transport.TLS = &tls.Config{}
 	}
+
+	// 1) "Ping" : vérifier la connectivité sur le premier broker
+	if len(cfg.Brokers) == 0 {
+		return nil, fmt.Errorf("aucun broker spécifié")
+	}
+	primaryBroker := cfg.Brokers[0]
+
+	// Dial direct pour checker si on arrive à se connecter
+	conn, err := kafka.DialContext(ctx, "tcp", primaryBroker)
+	if err != nil {
+		return nil, fmt.Errorf("erreur de connexion/ping sur %s: %w", primaryBroker, err)
+	}
+	defer conn.Close()
+
+	// On peut pousser plus loin en faisant un read de métadonnées,
+	// exemple: lire la liste des partitions du topic (si on veut être sûr que ce topic existe)
+	_, err = conn.ReadPartitions()
+	if err != nil {
+		return nil, fmt.Errorf("erreur ReadPartitions sur %s: %w", primaryBroker, err)
+	}
+
+	// 2) Construire le writer
+	w := &kafka.Writer{
+		Addr:      kafka.TCP(cfg.Brokers...),
+		Topic:     cfg.Topic,
+		Transport: transport,
+		// Autres options (BatchTimeout, Balancer, etc.) si besoin
+	}
+
+	return &Producer{
+		writer: w,
+		topic:  cfg.Topic,
+	}, nil
 }
 
 // Publish envoie un événement Avro au topic Kafka
