@@ -1,4 +1,3 @@
-```markdown
 # Présentation de `avro_kafka_config`
 
 `avro_kafka_config` est un module Go destiné à faciliter la **gestion d’un cluster Kafka Confluent Cloud** à travers :
